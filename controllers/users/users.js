@@ -95,7 +95,7 @@ const registerCtrl = async (req, res, next) => {
       const userId = req.session.userAuth;
 
       //? find the user
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).populate("posts");
       res.json({
         status: "success",
         data: user,
