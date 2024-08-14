@@ -21,9 +21,10 @@ const createCommentCtrl = async (req, res) => {
       const user = await User.findById(req.session.userAuth);
       //push comment to user
       user.comments.push(comment._id);
+      //disable validation
       //save
-      await post.save();
-      await user.save();
+      await post.save({validateBeforeSave: false});
+      await user.save({validateBeforeSave: false});
       res.json({
         status: "success",
         user: "comment created",
