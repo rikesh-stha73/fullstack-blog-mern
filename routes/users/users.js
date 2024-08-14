@@ -22,6 +22,29 @@ const userRoutes = express.Router();
 const upload = multer({storage})
 
 
+
+//Rendering Forms
+userRoutes.get('/login', (req,res)=>{
+  res.render('users/login');
+})
+userRoutes.get('/register', (req,res)=>{
+  res.render('users/register');
+})
+userRoutes.get('/profile-page', (req,res)=>{
+  res.render('users/profile');
+})
+userRoutes.get('/upload-profile-photo-form', (req,res)=>{
+  res.render('users/uploadProfilePhoto');
+})
+userRoutes.get('/upload-cover-photo-form', (req,res)=>{
+  res.render('users/uploadProfilePhoto');
+})
+//Update User Form
+userRoutes.get('/update-user-form', (req,res)=>{
+  res.render('users/updateUser');
+})
+
+
 //POST/api/v1/users/register
 userRoutes.post("/register", registerCtrl);
 
