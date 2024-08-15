@@ -1,340 +1,267 @@
 const bcrypt = require("bcryptjs");
 const User = require("../../model/user/User");
 const appErr = require("../../utils/appErr");
-const { render } = require("ejs");
+
 //register
 const registerCtrl = async (req, res, next) => {
   const { fullname, email, password } = req.body;
-  //* Check if fields are empty
-    if(!fullname || !email || !password) {
-      // return next(appErr("All fields are required", 400));
-      return res.render('users/register', {
-        error: "All fields are required",
-      })
-    }
-
-    try {
-       //? 1. Check if user Exists
-       const userFound = await User.findOne({ email });
-       //throw an error here
-       if(userFound) {
-        // return next(appErr("User already exists", 400));
-        return res.render('users/register', {
-          error: "User Email already exists",
-      })
-
-      }
-
-      //? Hash Password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-      //? Register User
-      const user = await User.create({ 
-        fullname, 
-        email, 
-        password:hashedPassword,
+  //check if field is empty
+  if (!fullname || !email || !password) {
+    // return next(appErr("All fields are required"));
+    return res.render("users/register", {
+      error: "All fields are required",
+    });
+  }
+  try {
+    //1. check if user exist (email)
+    const userFound = await User.findOne({ email });
+    //throw an error
+    if (userFound) {
+      return res.render("users/register", {
+        error: "Exist is taken",
       });
-
-      //  res.json({
-      //   status: "success",
-      //   data: user,
-      // });
-
-      //?Redirect
-      res.redirect("/api/v1/users/profile-page");
-    } catch (error) {
-      //  res.json(error);
-      return res.render('users/register', {
-        error: error.message,
-      })
     }
-  };
-  
-  //login
-  const loginCtrl = async (req, res, next) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      // return next(appErr("All fields are required", 400));
-      return res.render('users/login', {
-        error: "All fields are required",
-      })
+    //Hash passsword
+    const salt = await bcrypt.genSalt(10);
+    const passswordHashed = await bcrypt.hash(password, salt);
+    //register user
+    const user = await User.create({
+      fullname,
+      email,
+      password: passswordHashed,
+    });
+    //redirect
+    res.redirect("/api/v1/users/profile-page");
+  } catch (error) {
+    res.json(error);
+  }
+};
+
+//login
+const loginCtrl = async (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.render("users/login", {
+      error: "Email and password fields are required",
+    });
+  }
+  try {
+    //Check if email exist
+    const userFound = await User.findOne({ email });
+    if (!userFound) {
+      //throw an error
+      return res.render("users/login", {
+        error: "Invalid login credentials",
+      });
     }
-    try {
-      //? Check if user exists
-      const userFound = await User.findOne({ email });
-      if (!userFound) {
-        //! Throw error
-        // return res.json({
-        //   status: "failed",
-        //   data: "Invalid Login Credentials",
-        // });
-        return res.render('users/login', {
-          error: "Invalid Login Credentials",
-        })
-
-      }
-      //? Check if password is correct
-      const isMatch = await bcrypt.compare(password, userFound.password);
-        if (!isMatch) {
-          //! Throw error
-          // return res.json({
-          //   status: "failed",
-          //   data: "Invalid Login Credentials",
-          // });
-
-          return res.render('users/login', {
-            error: "Invalid Login Credentials",
-          })
-        }
-
-        //* Save user in session
-        req.session.userAuth = userFound._id;
-      //  res.json({
-      //   status: "success",
-      //   data: userFound,
-      // });
-      
-      //?Redirect
-      res.redirect("/api/v1/users/profile-page");
-    } catch (error) {
-      //  res.json(error);
-       return res.render('users/login', {
-        error: error.message,
-      })
+    //verify password
+    const isPasswordValid = await bcrypt.compare(password, userFound.password);
+    if (!isPasswordValid) {
+      //throw an error
+      return res.render("users/login", {
+        error: "Invalid login credentials",
+      });
     }
-  };
-  
-  //details
-  const userDetailsCtrl = async (req, res) => {
-    try {
-      //? Get userId from params
-      const userId = req.params.id;
+    //save the user into
+    req.session.userAuth = userFound._id;
+    //redirect
+    res.redirect("/api/v1/users/profile-page");
+  } catch (error) {
+    res.json(error);
+  }
+};
 
-      //? find the user
-      const user = await User.findById(userId);
-      // res.json({
-      //   status: "success",
-      //   data: user,
-      // });
-
-      res.render('users/updateUser', {user, error: ""});
-    } catch (error) {
-      // res.json(error);
-      return res.render('users/updateUser', {
-        error: error.message,
-      })
-    }
-  };
-  //profile
-  const profileCtrl = async (req, res) => {
-    try {
-      //? Get login user details
-      const userId = req.session.userAuth;
-
-      //? find the user
-      const user = await User.findById(userId)
+//details
+const userDetailsCtrl = async (req, res) => {
+  try {
+    //get userId from params
+    const userId = req.params.id;
+    //find the user
+    const user = await User.findById(userId);
+    res.render("users/updateUser", {
+      user,
+      error: "",
+    });
+  } catch (error) {
+    res.render("users/updateUser", {
+      error: error.message,
+    });
+  }
+};
+//profile
+const profileCtrl = async (req, res) => {
+  try {
+    //get the login user
+    const userID = req.session.userAuth;
+    //find the user
+    const user = await User.findById(userID)
       .populate("posts")
       .populate("comments");
-      // res.json({
-      //   status: "success",
-      //   data: user,
-      // });
+    res.render("users/profile", { user });
+  } catch (error) {
+    res.json(error);
+  }
+};
 
-      res.render('users/profile', {user});
-    } catch (error) {
-      res.json(error);
+//upload profile photo
+const uploadProfilePhotoCtrl = async (req, res, next) => {
+  try {
+    //check if file exist
+    if (!req.file) {
+      return res.render("users/uploadProfilePhoto", {
+        error: "Please upload image",
+      });
     }
-  };
-  
-  //upload profile photo
-  const uploadProfilePhotoCtrl = async (req, res, next) => {
-    try {
-      //check if file exists
-      if(!req.file) {
-        //! Throw error
-        // return next(appErr("Please upload aa image", 400));
-        return res.render('users/uploadProfilePhoto', {
-          error: "Please upload an image",
-        });
-      }
-      // Find the user to be updated
-      const userId = req.session.userAuth;
-      const userFound = await User.findById(userId);
-      if (!userFound) {
-        //! Throw error
-        // return next(appErr("User not found", 403));
-        return res.render('users/profile', {
-          error: "User not found",
-        });
-      }
-      await User.findByIdAndUpdate(userId, {
+    //1. Find the user to be updated
+    const userId = req.session.userAuth;
+    const userFound = await User.findById(userId);
+    //2. check if user is found
+    if (!userFound) {
+      return res.render("users/uploadProfilePhoto", {
+        error: "User not found",
+      });
+    }
+    //5.Update profile photo
+    const userUpdated = await User.findByIdAndUpdate(
+      userId,
+      {
         profileImage: req.file.path,
-      },{
+      },
+      {
         new: true,
-      })
-      // res.json({
-      //   status: "success",
-      //   data: "You have successfully uploaded your profile photo",
-      // });
-
-      //redirect
-      res.redirect("/api/v1/users/profile-page");
-    } catch (error) {
-    // return next(appErr(error.message, 400));
-    return res.render('users/profile', {
-      error:error.message,
-      
+      }
+    );
+    //redirect
+    res.redirect("/api/v1/users/profile-page");
+  } catch (error) {
+    return res.render("users/uploadProfilePhoto", {
+      error: error.message,
     });
   }
-  };
-  
-  //upload cover image
-  
-  const uploadCoverImgCtrl = async (req, res, next) => {
-    try {
-       //check if file exists
-      if(!req.file) {
-        //! Throw error
-        // return next(appErr("Please upload aa image", 400));
-        return res.render('users/uploadCoverPhoto', {
-          error: "Please upload an image",
-        });
-      }
-      // Find the user to be updated
-      const userId = req.session.userAuth;
-      const userFound = await User.findById(userId);
-      if (!userFound) {
-        //! Throw error
-        // return next(appErr("User not found", 403));
-        return res.render('users/profile', {
-          error: "User not found",
-        });
-      }
-      await User.findByIdAndUpdate(userId, {
-        coverImage: req.file.path,
-      },{
-        new: true,
-      })
-      // res.json({
-      //   status: "success",
-      //   data: "You have successfully uploaded your profile photo",
-      // });
+};
 
-      //redirect
-      res.redirect("/api/v1/users/profile-page");
-    } catch (error) {
-    // return next(appErr(error.message, 400));
-    return res.render('users/profile', {
-      error:error.message,
-    });
-  }
-  };
-  
-  //update password
-  const updatePasswordCtrl = async (req, res, next) => {
-    const { password} = req.body;
+//upload cover image
 
-    try {
-      //? check if user is updating the password
-      if(password) {
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-          
-        //?update password
-        await User.findByIdAndUpdate(req.session.userAuth, {
-          password:hashedPassword,
-        },{
-          new: true,
-        })
-      }
-
-      // res.json({
-      //   status: "success",
-      //   user: "Password has been changed successfully",
-      // });
-      //redirect
-      res.redirect("/api/v1/users/profile-page");
-    } catch (error) {
-      // return next(appErr(error.message, 400));
-      return res.render('users/profile-page', {
-        error:error.message,
-      user:"",
-
-      });      
+const uploadCoverImgCtrl = async (req, res) => {
+  try {
+    //check if file exist
+    if (!req.file) {
+      return res.render("users/uploadProfilePhoto", {
+        error: "Please upload image",
+      });
     }
-  };
-  
-  //update user
-  const updateUserCtrl = async (req, res, next) => {
-
-    const { fullname, email } = req.body;
-    try {
-      if(!email || !fullname) {
-        return res.render('users/updateUser', {
-          error:"Please Provide Details",
-          user:"",
-
-        }); 
+    //1. Find the user to be updated
+    const userId = req.session.userAuth;
+    const userFound = await User.findById(userId);
+    //2. check if user is found
+    if (!userFound) {
+      return res.render("users/uploadProfilePhoto", {
+        error: "User not found",
+      });
+    }
+    //5.Update profile photo
+    const userUpdated = await User.findByIdAndUpdate(
+      userId,
+      {
+        coverImage: req.file.path,
+      },
+      {
+        new: true,
       }
+    );
+    //redirect
+    res.redirect("/api/v1/users/profile-page");
+  } catch (error) {
+    return res.render("users/uploadProfilePhoto", {
+      error: error.message,
+    });
+  }
+};
 
-      //! check if email is not taken
-      if(email) {
-        const emailTaken = await User.findOne({ email });
-        if(emailTaken) {
-          // return next(appErr("Email is already taken", 400));
-          return res.render('users/updateUser', {
-            error:"Email is already taken",
-            user:"",
-
-          }); 
+//update password
+const updatePasswordCtrl = async (req, res, next) => {
+  const { password } = req.body;
+  try {
+    //Check if user is updating the password
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const passswordHashed = await bcrypt.hash(password, salt);
+      //update user
+      await User.findByIdAndUpdate(
+        req.session.userAuth,
+        {
+          password: passswordHashed,
+        },
+        {
+          new: true,
         }
+      );
+      //redirect
+      res.redirect("/api/v1/users/profile-page");
+    }
+  } catch (error) {
+    return res.render("users/uploadProfilePhoto", {
+      error: error.message,
+    });
+  }
+};
+
+//update user
+const updateUserCtrl = async (req, res, next) => {
+  const { fullname, email } = req.body;
+  try {
+    if (!fullname || !email) {
+      return res.render("users/updateUser", {
+        error: "Please provide details",
+        user: "",
+      });
+    }
+    //Check if email is not taken
+    if (email) {
+      const emailTaken = await User.findOne({ email });
+      if (emailTaken) {
+        return res.render("users/updateUser", {
+          error: "Email is taken",
+          user: "",
+        });
       }
-      //? update the user
-       await User.findByIdAndUpdate(req.session.userAuth, {
+    }
+    //update the user
+    await User.findByIdAndUpdate(
+      req.session.userAuth,
+      {
         fullname,
         email,
-      },{
+      },
+      {
         new: true,
-      });
-      // res.json({
-      //   status: "success",
-      //   data: user,
-      // });
-      
+      }
+    );
+    res.redirect("/api/v1/users/profile-page");
+  } catch (error) {
+    return res.render("users/updateUser", {
+      error: error.message,
+      user: "",
+    });
+  }
+};
 
-      //redirect
-      res.redirect("/api/v1/users/profile-page");
-    } catch (error) {
-      // return next(appErr(error.message, 400));
-      return res.render('users/updateUser', {
-        error:error.message,
-      user:"",
+//logout
+const logoutCtrl = async (req, res) => {
+  //destroy session
+  req.session.destroy(() => {
+    res.redirect("/api/v1/users/login");
+  });
+};
 
-      });      
-    }
-  };
-  
-  //logout
-  const logoutCtrl = async (req, res) => {
-      //Destroy session
-      req.session.destroy(()=>{
-        res.redirect("/api/v1/users/login");
-      });
-      // res.json({
-      //   status: "success",
-      //   user: "User logout",
-      // });
-  };
-  
-  module.exports = {
-    registerCtrl,
-    loginCtrl,
-    userDetailsCtrl,
-    profileCtrl,
-    uploadProfilePhotoCtrl,
-    uploadCoverImgCtrl,
-    updatePasswordCtrl,
-    updateUserCtrl,
-    logoutCtrl,
-  };
-  
+module.exports = {
+  registerCtrl,
+  loginCtrl,
+  userDetailsCtrl,
+  profileCtrl,
+  uploadProfilePhotoCtrl,
+  uploadCoverImgCtrl,
+  updatePasswordCtrl,
+  updateUserCtrl,
+  logoutCtrl,
+};

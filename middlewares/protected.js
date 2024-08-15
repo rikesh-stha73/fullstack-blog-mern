@@ -1,12 +1,11 @@
-const appErr = require('../utils/appErr');
-const protected = (req, res, next)=>{
-    //Check if user is logged in
-    if(req.session.userAuth){
-        next();
-    }else{
-        // next(appErr('Not Authorized, Please Login', 401));
-        res.render('users/notAuthorize');
-    }
-};
+const appErr = require("../utils/appErr");
 
+const protected = (req, res, next) => {
+  //check if user is login
+  if (req.session.userAuth) {
+    next();
+  } else {
+    res.render("users/notAuthorize");
+  }
+};
 module.exports = protected;
