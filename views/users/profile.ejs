@@ -9,7 +9,6 @@
       src="https://kit.fontawesome.com/42a182743f.js"
       crossorigin="anonymous"
     ></script>
-    
     <!-- CSS -->
     <link rel="stylesheet" href="/css/profile.css" />
     <link rel="stylesheet" href="/css/style.css" />
@@ -19,35 +18,31 @@
     <!-- footer -->
     <%-include('../partials/navbar.ejs') %>
     <div class="profile-container">
-      <header
-        style="
-          background-image: url(https://cdn.pixabay.com/photo/2022/10/03/19/03/building-7496662_1280.jpg);
-        "
-      >
+      <header style="background-image: url(<%=user?.coverImage%>)">
         <div class="icons-container">
           <p>
-            <i class="fas fa-user"></i>
+            <a href="/api/v1/users/upload-cover-photo-form">
+              <i class="fas fa-camera upload-btn">Add</i>
+            </a>
+          </p>
+
+          <p>
+            <a href="/api/v1/users/<%=user?._id%>">
+              <i class="fas fa-edit ">Edit</i>
+            </a>
           </p>
           <p>
-            <i class="fas fa-envelope"></i>
-          </p>
-          <p>
-            <i class="fas fa-lock"></i>
-          </p>
-          <p>
-            <i class="fas fa-sign-out-alt"></i>
+            <a href="/api/v1/users/updatePassword">
+              <i class="fas fa-edit ">Change Password</i>
+            </a>
           </p>
         </div>
         <!-- upload cover image icon -->
-        <i class="fas fa-plus upload-btn"></i>
       </header>
 
       <!-- profile image -->
       <div class="profile-img">
-        <img
-          src="https://cdn.pixabay.com/photo/2022/09/26/04/24/swan-7479623_1280.jpg"
-          alt="profile image"
-        />
+        <img src="<%=user?.profileImage%> " alt="profile image" />
         <!-- upload profile image icon -->
         <a href="/api/v1/users/upload-profile-photo-form">
           <i class="fas fa-camera upload-btn"></i>
@@ -58,16 +53,16 @@
         <div class="details-wrapper">
           <div class="details">
             <i class="fas fa-user"></i>
-            <p>Name: John Doe</p>
+            <p>Name: <%=user?.fullname%></p>
           </div>
           <div class="details">
             <i class="fas fa-envelope"></i>
-            <p>Email: John Doe</p>
+            <p>Email: <%=user?.email%></p>
           </div>
           <!-- date joined -->
           <div class="details">
             <i class="fas fa-calendar"></i>
-            <p>Date Joined: John Doe</p>
+            <p>Date Joined: <%=user?.createdAt.toLocaleDateString()%></p>
           </div>
         </div>
       </div>
@@ -80,83 +75,37 @@
 
     <!-- content -->
     <section class="container-flex">
-      <article class="post-content">
-        <img src="/images/post3.jpg" alt="" class="post-image" />
-        <p class="post-info">
-          <span class="post-author">
-            <i class="fas fa-user"></i>
-            <a href="#">John Doe</a>
-          </span>
-          <span class="post-date">
-            <i class="far fa-calendar-alt"></i>
-            <time datetime="2020-01-01">January 1, 2020</time>
-          </span>
-        </p>
-        <h1 class="post-title">Become a Web Developer</h1>
-        <p class="post-body">
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Officia
-          itaque inventore culpa placeat! Cum nam optio, labore, voluptas sunt
-          quam rem cupiditate laboriosam amet reiciendis velit doloribus eum!
-          Repudiandae, odio?
-        </p>
-        <!-- category -->
-        <div class="post-category">
-          <span>Category:</span>
-        </div>
-        <a href="/" class="post-read-more">Continue Reading...</a>
-      </article>
+      <%if(user?.posts?.length <=0 ){%>
+        <h1>You Have No Posts</h1>
+      <%}else{%>
+        <%user?.posts?.forEach((post)=>{%>
+          <article class="post-content">
+            <img src="<%=post?.image %>" alt="" class="post-image" />
+            <p class="post-info">
+              <span class="post-author">
+                <i class="fas fa-user"></i>
+                <a href="#">John Doe</a>
+              </span>
+              <span class="post-date">
+                <i class="far fa-calendar-alt"></i>
+                <time datetime="2020-01-01"><%=post?.createdAt %></time>
+              </span>
+            </p>
+            <h1 class="post-title"><%=post?.title %></h1>
+            <p class="post-body">
+              <%=post?.description %>
+            </p>
+            <!-- category -->
+            <div class="post-category">
+              <span>Category:<%=post?.category %></span>
+            </div>
+            <a href="/" class="post-read-more">Continue Reading...</a>
+          </article>
+    
+       <%}) %>
+      <%} %>
+    
 
-      <article class="post-content">
-        <img src="/images/post7.jpg" alt="" class="post-image" />
-        <p class="post-info">
-          <span class="post-author">
-            <i class="fas fa-user"></i>
-            <a href="#">John Doe</a>
-          </span>
-          <span class="post-date">
-            <i class="far fa-calendar-alt"></i>
-            <time datetime="2020-01-01">January 1, 2020</time>
-          </span>
-        </p>
-        <h1 class="post-title">How to Take care of Cat</h1>
-        <p class="post-body">
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Officia
-          itaque inventore culpa placeat! Cum nam optio, labore, voluptas sunt
-          quam rem cupiditate laboriosam amet reiciendis velit doloribus eum!
-          Repudiandae, odio?
-        </p>
-        <!-- category -->
-        <div class="post-category">
-          <span>Category:</span>
-        </div>
-        <a href="/" class="post-read-more">Continue Reading...</a>
-      </article>
-
-      <article class="post-content">
-        <img src="/images/post7.jpg" alt="" class="post-image" />
-        <p class="post-info">
-          <span class="post-author">
-            <i class="fas fa-user"></i>
-            <a href="#">John Doe</a>
-          </span>
-          <span class="post-date">
-            <i class="far fa-calendar-alt"></i>
-            <time datetime="2020-01-01">January 1, 2020</time>
-          </span>
-        </p>
-        <h1 class="post-title">How to Take care of Cat</h1>
-        <p class="post-body">
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Officia
-          itaque inventore culpa placeat! Cum nam optio, labore, voluptas sunt
-          quam rem cupiditate laboriosam amet reiciendis velit doloribus eum!
-          Repudiandae, odio?
-        </p>
-        <!-- category -->
-        <div class="post-category">
-          <span>Category:</span>
-        </div>
-        <a href="/" class="post-read-more">Continue Reading...</a>
-      </article>
     </section>
     <!-- footer -->
     <%-include('../partials/footer.ejs') %>

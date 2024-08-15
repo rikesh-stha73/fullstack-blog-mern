@@ -4,7 +4,8 @@ const protected = (req, res, next)=>{
     if(req.session.userAuth){
         next();
     }else{
-        next(appErr('Not Authorized, Please Login', 401));
+        // next(appErr('Not Authorized, Please Login', 401));
+        res.render('users/notAuthorize');
     }
 };
 
